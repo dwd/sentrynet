@@ -1,0 +1,20 @@
+sentry:
+  dsn: https://config.yaml@sentry.cridland.io/3456
+  tags:
+    location: Wales
+groups:
+  - tags:
+      target: demo
+    probes:
+      - probe: probes.http
+        url: https://www.google.co.uk/
+        every: 60
+        burst: 3
+      - probe: probes.http
+        url: https://www.bing.com/
+      - probe: probes.http
+        url: https://www.duckduckgo.com/
+        burst: 2
+      - probe: probes.http
+        url: http://sentry.io/
+        every: 60
