@@ -1,7 +1,21 @@
 # SentryNet
 #### Abusing Sentry into an Uptime/Responsivity Monitor
 
+### What's it do?
+
 SentryNet is a smallish chunk of Python which probes your services in various ways, dumping errors and telemetry into Sentry.
+
+THRILL! To graphs of response times.
+
+![Screenshot of Discover graph](docs/images/discover.png)
+
+GASP! At breakdowns of the probe trace.
+
+![Screenshot of Trace](docs/images/trace.png)
+
+BE DISAPPOINTED! At errors if your services are unreachable.
+
+Obviously I'd put a screenshot here, too, but all my services are perfect and never get downtime.
 
 You'll need:
 * A Sentry account, or a self-hosted Sentry deployment.
