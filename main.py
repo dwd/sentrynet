@@ -17,7 +17,7 @@ async def probe_single(probe, config: ProbeConfig):
                     await probe.probe(config)
                     transaction.set_status('ok')
                 except Exception as err:
-                    print("Transaction: %s error" % transaction.name)
+                    print("Transaction: %s error: %s" % (transaction.name, str(err)))
                     transaction.set_status('internal_error')
                     hub.capture_exception(err)
 
