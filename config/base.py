@@ -1,6 +1,7 @@
 import importlib
 import yaml
 from pydantic import BaseModel
+from typing import Optional
 
 
 class SentryConfig(BaseModel):
@@ -9,6 +10,7 @@ class SentryConfig(BaseModel):
 
 
 class ProbeConfig(BaseModel):
+    title: Optional[str] = None
     probe: str
     every: int = 300
     burst: int = 1

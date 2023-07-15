@@ -1,27 +1,45 @@
-# This is a sample Python script.
 import asyncio
-from datetime import datetime, timedelta
 import importlib
-from typing import Optional
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import sentry_sdk
 
-from config.base import ProbeConfig
+from config.base import ProbeConfig, ProbeGroup
+from config import load, check
+
+
+async def probe_single(probe, config: ProbeConfig):
+    with sentry_sdk.Hub(sentry_sdk.Hub.current) as hub:
+        with hub.push_scope() as scope:
+            with hub.start_transaction(op=config.probe, name=config.title) as transaction:
+                try:
+                    for tag, val in config.tags.items():
+                        scope.set_tag(tag, val)
+                    await probe.probe(config)
+                    transaction.set_status('ok')
+                except Exception as err:
+                    print("Transaction: %s error" % transaction.name)
+                    transaction.set_status('internal_error')
+                    hub.capture_exception(err)
 
 
 async def probe_every(config: ProbeConfig):
-    print("Trying to probe using", repr(config))
     probe = importlib.import_module(config.probe)
     while True:
         for i in range(config.burst):
-            await probe.probe(config)
+            await probe_single(probe, config)
         await asyncio.sleep(config.every)
+
+
+def probe_group(group: ProbeGroup):
+    probe_tasks = []
+    for probe in group.probes:
+        probe_config = check(probe, group)
+        probe_tasks.append(asyncio.create_task(probe_every(probe_config)))
+    return probe_tasks
 
 
 async def main():
     import sentry_sdk
-    from config import load, check
     import sys
 
     config = load(sys.argv[1])
@@ -33,9 +51,7 @@ async def main():
 
     probe_tasks = []
     for group in config.groups:
-        for probe in group.probes:
-            probe_config = check(probe, group)
-            probe_tasks.append(asyncio.create_task(probe_every(probe_config)))
+        probe_tasks += probe_group(group)
     await asyncio.wait(probe_tasks)
 
 asyncio.run(main())
