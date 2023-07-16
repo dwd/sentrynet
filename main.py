@@ -12,6 +12,8 @@ async def probe_single(probe, config: ProbeConfig):
         with hub.push_scope() as scope:
             with hub.start_transaction(op=config.probe, name=config.title) as transaction:
                 try:
+                    scope.span = transaction
+                    scope.set_tag('probe', config.probe)
                     for tag, val in config.tags.items():
                         scope.set_tag(tag, val)
                     await probe.probe(config)
