@@ -1,13 +1,18 @@
 from typing import Optional
 from config.base import ProbeGroup, ProbeConfig
 from urllib.parse import urlparse
+from http_utils import Assertion
 
 
+## Essentially a ProbeRequest that's inherited from ProbeConfig.
 class Config(ProbeConfig):
     url: str
     method: Optional[str] = None
-    expected: Optional[int] = None
-    tags: dict[str,str] = {}
+    query: dict = {}
+    body: Optional[dict] = None
+    expected: int = 200
+    set_keys: Optional[dict] = None
+    assertions: Optional[dict[str,Assertion]] = None
 
 
 def check_config(config: dict, group: ProbeGroup):

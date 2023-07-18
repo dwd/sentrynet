@@ -9,6 +9,7 @@ aiohttp = "*"
 aioscheduler = "*"
 pydantic = "*"
 pyyaml = "*"
+jsonpath-ng = "*"
 
 [dev-packages]
 

@@ -1,6 +1,17 @@
 # SentryNet
 #### Abusing Sentry into an Uptime/Responsivity Monitor
 
+### Licence and Copyright
+
+Copyright 2023 Dave Cridland <dave@cridland.net>
+
+This is licensed to you under the highly permissive "MIT" licence,
+which is included in full as LICENCE.
+
+For the avoidance of doubt, all source code herein, whether singly
+or in aggregate, is under the same copyright and copyright licence
+unless specifically stated otherwise at the top of the file.
+
 ### What's it do?
 
 SentryNet is a smallish chunk of Python which probes your services in various ways, dumping errors and telemetry into Sentry.
@@ -71,18 +82,76 @@ groups:
 
 These require, at minimum, a `probe` key, which simply points to the Python module that implements the probe.
 
-Optionally, they can include `every` - which gives the period in seconds - and `burst`, which is how many to do  each time. Bursts are consecutive not concurrent.
+Optionally, they can include:
+* `title` - a title - for some probes that can't default a sensible one, this is mandatory.
+* `every` - gives the period in seconds.
+* `burst` - how many to do each time. Bursts are consecutive not concurrent.
 
 ### Probe Types
 
-### probes.http
+#### probes.http
 
-The only defined type right now is a relatively simple HTTP probe. It'll do a GET on the URL you give, and check the status code it gets back. This uses two additional keys in the `probe` definition:
+The only defined "production ready" type right now is a relatively simple HTTP probe. It'll do a GET on the URL you give, and check the status code it gets back. This uses two additional keys in the `probe` definition:
 
 * `url` - the (mandatory) URL to probe.
-* `expected` - the status code we expect, defaulting to `200`.
+* `method` - the HTTP method (verb) to use. If this isn't set, the default is `GET` unless there's a `body` - in which case it's `POST`
+* `expected` - the status code we expect, defaulting to `200` (or `201` for `POST`)
+* `body` - optional request body. You can provide a string to send, here, or if this is a map, it'll be JSON encoded.
+* `set_keys` - a map of identifiers ("keys") to JSONPATH to extract from the response.
+* `assertions` - a map of keys against assertions - currently either `exists` with a boolean, which defaults to true, and `value` with an exact value match.
+
+For example, to test a `/status` endpoint that responds with `{"status":"ok"}` if you post in `{"checks":["status"]}` normally, try:
+```yaml
+- probe: probes.http
+  url: https://api.example/status
+  body:
+    check:
+      - status
+  expected: 200
+  set_keys:
+    status: "$.status"
+  assertions:
+    status: ok
+```
+
+#### probes.script
+
+This is broadly a chained set of the requests above. Keys carry
+over between requests, and unlike the simple  probe above,
+both URLs and request bodies can be interpolated using them.
+
+The overall probe is required to have a `title` set, and optionally has
+an `init_keys` mapping, containing each key's initial value.
+
+Finally, a `steps` array has the same keys as the `probes.http` probe's keys above, except:
+
+* Generic probe keys are not permitted here.
+* `url` and `body` keys are interpolated.
+
+Interpolation operates by the Python str.format_map, in fact, with the current keys passed in directly as a map.
+
+However, if a string to be interpolated precisely matches the name of a key, it's simply replaced. Therefore if there is a key called `test` currently set to `true`, and the body looks like:
+
+```yaml
+body:
+  thing: test
+```
+
+Then what'll be sent as the body is actually:
+
+```json
+{"thing":true}
+```
+
+If you genuinely want the string "test" sent here, then rename the key. 
+
+#### probes.ssh
+
+OpenSSH client, instrumented by reading off the debug log in realtime. Currently does work, but you'd need to make available private keys which seems less than useful; I need to handle the case where we simply want to check service availability without needing credentials and checking we can authenticate. 
 
 ### Usage
+
+The simplest thing to do is to put your config.yaml into this directory, build a docker image, and deploy it somewhere for cheap laughs.
 
 Once configured and running, it will simply emit transaction (and error) events to Sentry for its configured Project.
 

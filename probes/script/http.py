@@ -1,15 +1,20 @@
-import json
-
-import aiohttp
-import sentry_sdk
-from urllib.parse import urlparse
-
-from http_utils.trace import traced_session, traced_request
+from http_utils import ProbeRequest, traced_session, traced_request, interpolate
 from .config import Config
 
 
 async def probe(config: Config):
+    keys = {}
+    if config.init_keys is not None:
+        keys.update(config.init_keys)
     async with traced_session() as session:
         for step in config.steps:
-            data = await traced_request(session, step.url, method=method, body=step.body)
-            print(repr(data))
+            request = ProbeRequest(
+                url=interpolate(step.url, keys),
+                method=step.method,
+                expected=step.expected,
+                set_keys=step.set_keys,
+                assertions=step.assertions,
+                body=interpolate(step.body, keys)
+            )
+            new_keys = await traced_request(session, request)
+            keys.update(new_keys)
