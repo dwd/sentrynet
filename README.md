@@ -116,7 +116,7 @@ For example, to test a `/status` endpoint that responds with `{"status":"ok"}` i
 
 #### probes.script
 
-This is broadly a chained set of the requests above. Keys carry
+This is broadly a chained set of the requests above. Keys created by `set_keys` carry
 over between requests, and unlike the simple  probe above,
 both URLs and request bodies can be interpolated using them.
 
@@ -125,10 +125,10 @@ an `init_keys` mapping, containing each key's initial value.
 
 Finally, a `steps` array has the same keys as the `probes.http` probe's keys above, except:
 
-* Generic probe keys are not permitted here.
+* Generic probe keys, like `title`, or `every`, are not permitted here.
 * `url` and `body` keys are interpolated.
 
-Interpolation operates by the Python str.format_map, in fact, with the current keys passed in directly as a map.
+Interpolation operates by the Python `str.format_map`, in fact, with the current keys passed in directly as a map.
 
 However, if a string to be interpolated precisely matches the name of a key, it's simply replaced. Therefore if there is a key called `test` currently set to `true`, and the body looks like:
 

@@ -10,6 +10,7 @@ aioscheduler = "*"
 pydantic = "*"
 pyyaml = "*"
 jsonpath-ng = "*"
+slixmpp = "*"
 
 [dev-packages]
 
