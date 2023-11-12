@@ -43,6 +43,9 @@ def probe_group(group: ProbeGroup):
 async def main():
     import sentry_sdk
     import sys
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
 
     config = load(sys.argv[1])
 
